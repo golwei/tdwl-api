@@ -82,6 +82,8 @@ func main() {
 
 	// Allow to use Admin to manage User, Product
 	// add resource
+	Admin.AddResource(&Swiper{})
+	Admin.AddResource(&Grid{})
 	Admin.AddResource(&Category{})
 	Admin.AddResource(&Product{})
 	Admin.AddResource(&ColorVariation{})
