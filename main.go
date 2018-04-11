@@ -103,5 +103,6 @@ func main() {
 	// Mount admin interface to mux
 	Admin.MountTo("/admin", mux)
 	fmt.Println("Listening on: 80")
-	http.ListenAndServe(":80", mux)
+	http.Handle("/", mux)
+	http.ListenAndServe(":80", nil)
 }
