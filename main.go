@@ -2,15 +2,19 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
+	"golang.org/x/crypto/acme/autocert"
+
+	"github.com/gin-gonic/autotls"
+	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/qor/admin"
 	"github.com/qor/media"
 	"github.com/qor/media/media_library"
 	"github.com/qor/media/oss"
-	"github.com/qor/qor/utils"
 )
 
 type Grid struct {
@@ -95,14 +99,27 @@ func main() {
 	// scopes
 	// initalize an HTTP request multiplexer
 	//======================
+	r := gin.Default()
 	mux := http.NewServeMux()
 	for _, path := range []string{"system", "javascripts", "stylesheets", "images"} {
-		mux.Handle(fmt.Sprintf("/%s/", path), utils.FileServer(http.Dir("public")))
+		r.StaticFS(fmt.Sprintf("/%s", path), http.Dir(fmt.Sprintf("public/%s", path)))
+		//	mux.Handle(fmt.Sprintf("/%s/", path), utils.FileServer(http.Dir("public")))
 	}
 
 	// Mount admin interface to mux
 	Admin.MountTo("/admin", mux)
-	fmt.Println("Listening on: 80")
-	http.Handle("/", mux)
-	http.ListenAndServe(":80", nil)
+	//	fmt.Println("Listening on: 80")
+	//	http.Handle("/", mux)
+	//	http.ListenAndServe(":8080", mux)
+
+	r.Any("/admin/*filepath", gin.WrapH(mux))
+	//	r.Run()
+	m := autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist("wcqt.site"),
+		Cache:      autocert.DirCache("./.cache"),
+	}
+
+	log.Fatal(autotls.RunWithManager(r, &m))
+
 }
