@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/medivhzhan/weapp"
 	"github.com/qor/admin"
 	"github.com/qor/media"
 	"github.com/qor/media/media_library"
@@ -100,6 +101,7 @@ func main() {
 	// initalize an HTTP request multiplexer
 	//======================
 	r := gin.Default()
+	r.GET("/login", Login)
 	mux := http.NewServeMux()
 	for _, path := range []string{"system", "javascripts", "stylesheets", "images"} {
 		r.StaticFS(fmt.Sprintf("/%s", path), http.Dir(fmt.Sprintf("public/%s", path)))
@@ -122,4 +124,20 @@ func main() {
 
 	log.Fatal(autotls.RunWithManager(r, &m))
 
+}
+func Ping(c *gin.Context) {
+	c.JSON(200, gin.H{
+		"message": "pongxxx",
+	})
+}
+func Login(c *gin.Context) {
+	const (
+		appID  = "wx5032f0d783147d67"
+		secret = "6a194cc97598e54d76e43ac2fd632c3d"
+	)
+	//	firstname := c.DefaultQuery("firstname", "Guest")
+	code := c.Query("code") // shortcut for c.Request.URL.Query().Get("lastname")
+	oid, ssk, err := weapp.Login(appID, secret, code)
+	fmt.Println(oid, ssk, err)
+	//	c.String(http.StatusOK,"abc")
 }
