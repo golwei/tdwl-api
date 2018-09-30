@@ -103,6 +103,7 @@ func main() {
 	r.GET("/login", Login)
 	r.GET("/grids", GetGrids)
 	r.GET("/swipers", GetSwipers)
+	r.GET("/products", GetProducts)
 	mux := http.NewServeMux()
 	for _, path := range []string{"system", "javascripts", "stylesheets", "images"} {
 		r.StaticFS(fmt.Sprintf("/%s", path), http.Dir(fmt.Sprintf("public/%s", path)))
@@ -126,6 +127,17 @@ func main() {
 
 	log.Fatal(autotls.RunWithManager(r, &m))
 
+}
+func GetProducts(c *gin.Context) {
+	DB, _ := gorm.Open("sqlite3", "tdwl.db")
+	defer DB.Close()
+	res := map[uint][]Product{}
+	m := []Product{}
+	DB.Find(&m)
+	for _, p := range m {
+		res[p.CategoryID] = append(res[p.CategoryID], p)
+	}
+	c.JSON(200, res)
 }
 func GetSwipers(c *gin.Context) {
 	DB, _ := gorm.Open("sqlite3", "tdwl.db")
