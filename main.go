@@ -5,8 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	"golang.org/x/crypto/acme/autocert"
-
 	"github.com/gin-gonic/autotls"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -16,6 +14,7 @@ import (
 	"github.com/qor/media"
 	"github.com/qor/media/media_library"
 	"github.com/qor/media/oss"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 type Grid struct {
@@ -102,6 +101,8 @@ func main() {
 	//======================
 	r := gin.Default()
 	r.GET("/login", Login)
+	r.GET("/grids", GetGrids)
+	r.GET("/swipers", GetSwipers)
 	mux := http.NewServeMux()
 	for _, path := range []string{"system", "javascripts", "stylesheets", "images"} {
 		r.StaticFS(fmt.Sprintf("/%s", path), http.Dir(fmt.Sprintf("public/%s", path)))
@@ -115,7 +116,8 @@ func main() {
 	//	http.ListenAndServe(":8080", mux)
 
 	r.Any("/admin/*filepath", gin.WrapH(mux))
-	//	r.Run()
+	//	r.Run(":80")
+
 	m := autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
 		HostPolicy: autocert.HostWhitelist("wcqt.site"),
@@ -124,6 +126,22 @@ func main() {
 
 	log.Fatal(autotls.RunWithManager(r, &m))
 
+}
+func GetSwipers(c *gin.Context) {
+	DB, _ := gorm.Open("sqlite3", "tdwl.db")
+	defer DB.Close()
+	m := []Swiper{}
+	DB.Find(&m)
+
+	c.JSON(200, m)
+}
+func GetGrids(c *gin.Context) {
+	DB, _ := gorm.Open("sqlite3", "tdwl.db")
+	defer DB.Close()
+	grids := []Grid{}
+	DB.Find(&grids)
+
+	c.JSON(200, grids)
 }
 func Ping(c *gin.Context) {
 	c.JSON(200, gin.H{
@@ -137,7 +155,7 @@ func Login(c *gin.Context) {
 	)
 	//	firstname := c.DefaultQuery("firstname", "Guest")
 	code := c.Query("code") // shortcut for c.Request.URL.Query().Get("lastname")
-	oid, ssk, err := weapp.Login(appID, secret, code)
-	fmt.Println(oid, ssk, err)
+	res, err := weapp.Login(appID, secret, code)
+	fmt.Println(res, err)
 	//	c.String(http.StatusOK,"abc")
 }
